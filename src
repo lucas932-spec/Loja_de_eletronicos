@@ -1,0 +1,117 @@
+CREATE DATABASE LojaEletronicos;
+
+
+USE LojaEletronicos;
+
+
+CREATE TABLE produtos (
+    id_produto INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    preco DECIMAL(10, 2) NOT NULL,
+    estoque INT NOT NULL
+);
+
+
+CREATE TABLE fornecedores (
+    id_fornecedor INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    contato VARCHAR(50)
+);
+
+
+CREATE TABLE compras (
+    id_compra INT AUTO_INCREMENT PRIMARY KEY,
+    id_fornecedor INT,
+    data_compra DATE NOT NULL,
+    FOREIGN KEY (id_fornecedor) REFERENCES fornecedores(id_fornecedor)
+);
+
+
+CREATE TABLE itens_compra (
+    id_item INT AUTO_INCREMENT PRIMARY KEY,
+    id_compra INT,
+    id_produto INT,
+    quantidade INT NOT NULL,
+    FOREIGN KEY (id_compra) REFERENCES compras(id_compra),
+    FOREIGN KEY (id_produto) REFERENCES produtos(id_produto)
+);
+
+
+INSERT INTO produtos (nome, preco, estoque) VALUES
+('Smartphone', 1500.00, 20),
+('Notebook', 3500.00, 15),
+('Tablet', 1200.00, 10),
+('Fone de Ouvido', 200.00, 50),
+('Carregador', 50.00, 100),
+('Monitor', 800.00, 25);
+
+
+INSERT INTO fornecedores (nome, contato) VALUES
+('Tech Supplies', 'tech@supplies.com'),
+('Eletronics World', 'world@electronics.com'),
+('Gadget Store', 'gadget@store.com');
+
+
+INSERT INTO compras (id_fornecedor, data_compra) VALUES
+(1, '2024-12-01'),
+(2, '2024-12-02');
+
+
+INSERT INTO itens_compra (id_compra, id_produto, quantidade) VALUES
+(1, 1, 10),  -- Smartphone
+(1, 2, 5),   -- Notebook
+(1, 4, 30),  -- Fone de Ouvido
+(2, 3, 8),   -- Tablet
+(2, 5, 20);  -- Carregador
+
+
+
+
+SELECT 
+    p.nome AS produto,
+    f.nome AS fornecedor,
+    f.contato
+FROM 
+    itens_compra ic
+JOIN 
+    produtos p ON ic.id_produto = p.id_produto
+JOIN 
+    compras c ON ic.id_compra = c.id_compra
+JOIN 
+    fornecedores f ON c.id_fornecedor = f.id_fornecedor
+ORDER BY 
+    p.nome;
+
+
+SELECT 
+    f.nome AS fornecedor,
+    SUM(ic.quantidade) AS total_itens_comprados
+FROM 
+    itens_compra ic
+JOIN 
+    compras c ON ic.id_compra = c.id_compra
+JOIN 
+    fornecedores f ON c.id_fornecedor = f.id_fornecedor
+GROUP BY 
+    f.nome
+ORDER BY 
+    total_itens_comprados DESC;
+
+
+UPDATE produtos p
+JOIN (
+    SELECT 
+        id_produto, 
+        SUM(quantidade) AS total_comprado
+    FROM 
+        itens_compra
+    GROUP BY 
+        id_produto
+) AS compras_totais
+ON 
+    p.id_produto = compras_totais.id_produto
+SET 
+    p.estoque = p.estoque + compras_totais.total_comprado;
+
+
+SELECT * FROM produtos;
